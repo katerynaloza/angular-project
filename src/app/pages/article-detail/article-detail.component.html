@@ -1,1 +1,16 @@
-<p>article-detail works!</p>
+<section class="wrap">
+  <a routerLink="/" class="back">← Back to homepage</a>
+
+  <mat-card *ngIf="article">
+    <img *ngIf="article.imageUrl" [src]="article.imageUrl" alt="article image" />
+    <mat-card-title>{{ article.title }}</mat-card-title>
+    <mat-card-content>
+      <div class="date" *ngIf="article.publishedAt">{{ article.publishedAt | date:'MMMM d, y' }}</div>
+      <p>{{ article.summary }}</p>
+    </mat-card-content>
+  </mat-card>
+
+  <p class="loading" *ngIf="loading && !article">Loading…</p>
+</section>
+
+

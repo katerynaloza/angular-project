@@ -1,1 +1,30 @@
-<p>home works!</p>
+<section class="wrap">
+    <mat-form-field appearance="outline" class="filter">
+        <mat-label>Filter by keywords</mat-label>
+        <span matPrefix><mat-icon>search</mat-icon></span>
+        <input matInput [formControl]="filter" placeholder="The most successful IT companies in 2020" />
+    </mat-form-field>
+
+    <p class="results">Results: {{ (articles$ | async)?.length || 0 }}</p>
+
+    <div class="spinner" *ngIf="loading">
+        <mat-spinner diameter="40"></mat-spinner>
+    </div>
+
+    <div class="grid" *ngIf="!loading">
+        <a class="card" *ngFor="let item of (articles$ | async)" [routerLink]="['/article', item.id]">
+        <mat-card>
+            <img *ngIf="item.imageUrl" [src]="item.imageUrl" alt="article image" />
+            <mat-card-content>
+            <div class="date" *ngIf="item.publishedAt">{{ item.publishedAt | date:'MMMM d, y' }}</div>
+            <mat-card-title [innerHTML]="item.title | highlight:(filter.value || '')"></mat-card-title>
+            <p [innerHTML]="short(item.summary) | highlight:(filter.value || '')"></p>
+            <p class="more">Read more →</p>
+            </mat-card-content>
+        </mat-card>
+        </a>
+    </div>
+
+    <p class="empty" *ngIf="!loading && (articles$ | async)?.length === 0">No results</p>
+</section>
+

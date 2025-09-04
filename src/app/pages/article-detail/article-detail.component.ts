@@ -1,13 +1,31 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { Api } from '../../core/services/api.service';
+import { Article } from '../../core/models/article.model';
+import { MatCardModule } from '@angular/material/card';
 
 
 @Component({
   selector: 'app-article-detail',
-  imports: [],
+  imports: [CommonModule, RouterModule, MatCardModule],
   templateUrl: './article-detail.component.html',
   styleUrl: './article-detail.component.scss'
 })
 
-export class ArticleDetail {
+export class ArticleDetail implements OnInit {
+  article?: Article;
+  loading = false;
 
+  constructor(private route: ActivatedRoute, private api: Api) {}
+
+  ngOnInit(): void {
+    const id = Number(this.route.snapshot.paramMap.get('id'));
+    if (!id) return;
+    this.loading = true;
+    this.api.getArticleById(id).subscribe({
+      next: (a:Article) => { this.article = a; this.loading = false; },
+      error: () => { this.loading = false; }
+    });
+  }
 }
