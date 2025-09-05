@@ -6,8 +6,7 @@
     <mat-card-title>{{ article.title }}</mat-card-title>
     <mat-card-content>
       <div class="date" *ngIf="article.publishedAt">{{ article.publishedAt | date:'MMMM d, y' }}</div>
-      <p>{{ article.summary }}</p>
-    </mat-card-content>
+ <div class="article-body" [innerHTML]="article.contentHTML"></div>    </mat-card-content>
   </mat-card>
 
   <p class="loading" *ngIf="loading && !article">Loading…</p>

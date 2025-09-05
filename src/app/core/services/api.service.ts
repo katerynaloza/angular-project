@@ -7,28 +7,43 @@ import {  Article } from '../models/article.model';
   providedIn: 'root'
 })
 export class Api {
-  private readonly BASE = 'https://api.spaceflightnewsapi.net/v4/articles';
+  private readonly BASE = 'https://dev.to/api/articles';
+
 
   constructor(private http: HttpClient) {}
 
-  private toArticle = (it: any): Article => ({
+  private toArticleList = (it: any): Article => ({
     id: it.id,
     title: it.title,
-    summary: it.summary,
-    imageUrl: it.image_url || it.imageUrl,
-    publishedAt: it.published_at || it.publishedAt,
+    summary: it.description,
+    imageUrl: it.cover_image || it.social_image || '',
+    publishedAt: it.published_at,
+    url: it.url
   });
 
-  getArticles(limit = 50) {
+  private toArticleDetail = (it: any): Article => ({
+    id: it.id,
+    title: it.title,
+    summary: it.description,
+    imageUrl: it.cover_image || it.social_image || '',
+    publishedAt: it.published_at,
+    url: it.url,
+    contentHTML: it.body_html 
+  });
+
+  getArticles(limit = 100, tag?: string) {
+    const qs = new URLSearchParams();
+    qs.set('per_page', String(limit));
+    if (tag) qs.set('tag', tag); 
     return this.http
-      .get<{ results: any[] }>(`${this.BASE}/?limit=${limit}`)
-      .pipe(map(res => (res.results || []).map(this.toArticle)));
+      .get<any[]>(`${this.BASE}?${qs.toString()}`)
+      .pipe(map(arr => (arr || []).map(this.toArticleList)));
   }
 
   getArticleById(id: number) {
     return this.http
-      .get<any>(`${this.BASE}/${id}/`)
-      .pipe(map(this.toArticle));
+      .get<any>(`${this.BASE}/${id}`)
+      .pipe(map(this.toArticleDetail));
   }
 }
 

@@ -2,7 +2,8 @@
     <mat-form-field appearance="outline" class="filter">
         <mat-label>Filter by keywords</mat-label>
         <span matPrefix><mat-icon>search</mat-icon></span>
-        <input matInput [formControl]="filter" placeholder="The most successful IT companies in 2020" />
+        <input matInput [formControl]="filter" 
+                placeholder="Ukraine rule in development" />
     </mat-form-field>
 
     <p class="results">Results: {{ (articles$ | async)?.length || 0 }}</p>

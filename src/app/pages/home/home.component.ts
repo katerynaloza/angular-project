@@ -43,7 +43,7 @@ export class HomeComponent implements OnInit {
 
   ngOnInit(): void {
     this.loading = true;
-    this.api.getArticles(50).subscribe({
+    this.api.getArticles(100).subscribe({
       next: list => {
         this.store.setArticles(list);
         this.loading = false;
