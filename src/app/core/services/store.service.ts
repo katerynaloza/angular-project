@@ -1,57 +1,80 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, combineLatest, map } from 'rxjs';
-import { Article } from '../models/article.model';
+import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
+import { ArticleData } from '../models/article.model';
+
+interface ScoredArticle {
+  article: ArticleData;
+  titleMatches: number;
+  summaryMatches: number;
+  hasAnyMatch: boolean;
+}
 
 @Injectable({
-    providedIn: 'root'
+  providedIn: 'root'
 })
-export class Store {
-      private articlesSubject = new BehaviorSubject<Article[]>([]);
-    articles$ = this.articlesSubject.asObservable();
+export class ArticleStoreService { 
+  private readonly articlesSubject = new BehaviorSubject<ArticleData[]>([]);
+  public readonly articles$: Observable<ArticleData[]> = this.articlesSubject.asObservable();
 
-    private filterSubject = new BehaviorSubject<string>('');
-    filter$ = this.filterSubject.asObservable();
+  private readonly filterSubject = new BehaviorSubject<string>('');
+  public readonly filter$: Observable<string> = this.filterSubject.asObservable();
 
-    setArticles(list: Article[]) {
-      this.articlesSubject.next(list);
+  constructor() {}
+
+  public setArticles(articles: ArticleData[]): void {
+    this.articlesSubject.next(articles);
+  }
+
+  public setFilter(value: string): void {
+    this.filterSubject.next(value ?? '');
+  }
+
+  public readonly filteredArticles$: Observable<ArticleData[]> = combineLatest([
+    this.articles$,
+    this.filter$
+  ]).pipe(
+    map(([articles, filter]) => {
+      const query = filter.trim().toLowerCase();
+      if (!query) {
+        return articles; 
+      }
+
+      const searchTokens = query.split(/\s+/).filter(Boolean);
+
+      return articles
+        .map(article => this.scoreArticle(article, searchTokens))
+        .filter(scoredArticle => scoredArticle.hasAnyMatch)
+        .sort(this.compareScoredArticles)
+        .map(scoredArticle => scoredArticle.article);
+    })
+  );
+
+  private scoreArticle(article: ArticleData, tokens: string[]): ScoredArticle {
+    const title = (article.title ?? '').toLowerCase();
+    const summary = (article.summary ?? '').toLowerCase();
+
+    const titleMatches = tokens.filter(token => title.includes(token)).length;
+    const summaryMatches = tokens.filter(token => summary.includes(token)).length;
+
+    return {
+      article,
+      titleMatches,
+      summaryMatches,
+      hasAnyMatch: titleMatches > 0 || summaryMatches > 0,
+    };
+  }
+
+  private compareScoredArticles(a: ScoredArticle, b: ScoredArticle): number {
+    const hasTitleMatchA = a.titleMatches > 0 ? 1 : 0;
+    const hasTitleMatchB = b.titleMatches > 0 ? 1 : 0;
+    if (hasTitleMatchB !== hasTitleMatchA) {
+      return hasTitleMatchB - hasTitleMatchA;
     }
 
-    setFilter(value: string) {
-      this.filterSubject.next(value ?? '');
+    if (b.titleMatches !== a.titleMatches) {
+      return b.titleMatches - a.titleMatches;
     }
 
-    filteredArticles$ = combineLatest([this.articles$, this.filter$]).pipe(
-      map(([articles, filter]) => {
-        const q = (filter || '').trim().toLowerCase();
-        if (!q) return articles;
-
-        const tokens = q.split(/\s+/).filter(Boolean);
-
-        const scored = articles
-          .map(a => {
-            const title = (a.title || '').toLowerCase();
-            const desc = (a.summary || '').toLowerCase();
-
-            const titleMatches = tokens.filter(t => title.includes(t)).length;
-            const descMatches = tokens.filter(t => desc.includes(t)).length;
-            const hasAny = titleMatches > 0 || descMatches > 0;
-
-            return { a, titleMatches, descMatches, hasAny };
-          })
-          .filter(x => x.hasAny)
-          .sort((x, y) => {
-            const xTitleFlag = x.titleMatches > 0 ? 1 : 0;
-            const yTitleFlag = y.titleMatches > 0 ? 1 : 0;
-            if (yTitleFlag !== xTitleFlag) return yTitleFlag - xTitleFlag;
-
-            if (y.titleMatches !== x.titleMatches) return y.titleMatches - x.titleMatches;
-
-            if (y.descMatches !== x.descMatches) return y.descMatches - x.descMatches;
-
-            return 0;
-          });
-
-        return scored.map(s => s.a);
-      })
-    );
+    return b.summaryMatches - a.summaryMatches;
+  }
 }

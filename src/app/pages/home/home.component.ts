@@ -1,9 +1,9 @@
-import { Component,OnInit } from '@angular/core';
+import { Component,OnDestroy,OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Api } from '../../core/services/api.service';
-import { Store } from '../../core/services/store.service';
+import { ArticleStoreService } from '../../core/services/store.service';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { debounceTime, distinctUntilChanged  } from 'rxjs';
+import { debounceTime, distinctUntilChanged, Subject, takeUntil  } from 'rxjs';
 import { RouterModule } from '@angular/router';
 import { MatCardModule} from '@angular/material/card';
 import { MatFormFieldModule} from '@angular/material/form-field';
@@ -29,14 +29,17 @@ import { HighlightPipe } from  '../../shared/highlite.pipe';
   styleUrl: './home.component.scss'
 })
 
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
+    private destroy$ = new Subject<void>();
+
+
   filter = new FormControl('', { nonNullable: true });
   loading = false;
 
   articles$: typeof this.store.filteredArticles$;
   rawArticles$: typeof this.store.articles$;
 
-  constructor(private api: Api, private store: Store) {
+  constructor(private api: Api, private store: ArticleStoreService) {
     this.articles$ = this.store.filteredArticles$;
     this.rawArticles$ = this.store.articles$;
   }
@@ -54,6 +57,11 @@ export class HomeComponent implements OnInit {
     this.filter.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged())
       .subscribe(value => this.store.setFilter(value));
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   short(text: string): string {

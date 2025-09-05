@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Api } from '../../core/services/api.service';
-import { Article } from '../../core/models/article.model';
+import { ArticleDetail } from '../../core/models/article.model';
 import { MatCardModule } from '@angular/material/card';
 
 
@@ -10,11 +10,11 @@ import { MatCardModule } from '@angular/material/card';
   selector: 'app-article-detail',
   imports: [CommonModule, RouterModule, MatCardModule],
   templateUrl: './article-detail.component.html',
-  styleUrl: './article-detail.component.scss'
+  styleUrls: ['./article-detail.component.scss']
 })
 
-export class ArticleDetail implements OnInit {
-  article?: Article;
+export class ArticleDetailComponent implements OnInit {
+  article?: ArticleDetail;
   loading = false;
 
   constructor(private route: ActivatedRoute, private api: Api) {}
@@ -24,7 +24,7 @@ export class ArticleDetail implements OnInit {
     if (!id) return;
     this.loading = true;
     this.api.getArticleById(id).subscribe({
-      next: (a:Article) => { this.article = a; this.loading = false; },
+      next: (a:ArticleDetail) => { this.article = a; this.loading = false; },
       error: () => { this.loading = false; }
     });
   }
